@@ -10,7 +10,7 @@ import { useStylesSignIn } from '../pages/SignIn';
 import CloseIcon from '@material-ui/icons/Close';
 
 interface ModalBlockProps {
-  title: string;
+  title?: string;
   children: React.ReactNode;
   classes?: ReturnType<typeof useStylesSignIn>;
   visible?: boolean;
@@ -44,22 +44,3 @@ export const ModalBlock: React.FC<ModalBlockProps> = ({
     </Dialog>
   );
 };
-
-{
-  /* <FormControl component="fieldset" fullWidth>
-<FormGroup aria-label="position" row>
-  <TextField
-    className={classes.loginSideField}
-    autoFocus
-    id="email"
-    label="E-Mail"
-    InputLabelProps={{
-      shrink: true,
-    }}
-    variant="filled"
-    type="email"
-    fullWidth
-  ></TextField>
-</FormGroup>
-</FormControl> */
-}
