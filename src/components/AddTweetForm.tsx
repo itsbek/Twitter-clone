@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
-import {
-  Avatar,
-  Button,
-  CircularProgress,
-  IconButton,
-  TextareaAutosize,
-} from '@material-ui/core';
-
-import ImageOutlinedIcon from '@material-ui/icons/ImageOutlined';
-import EmojiOutlinedIcon from '@material-ui/icons/EmojiEmotionsOutlined';
+import React from 'react';
 import classNames from 'classnames';
-import { useHomeStyles } from '../pages/Home/theme';
+import Avatar from '@material-ui/core/Avatar';
+import Alert from '@material-ui/lab/Alert';
+import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import IconButton from '@material-ui/core/IconButton';
+import TextareaAutosize from '@material-ui/core/TextareaAutosize';
+import ImageOutlinedIcon from '@material-ui/icons/ImageOutlined';
+import { useHomeStyles } from '../pages/theme';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchAddTweet, setAddFormState } from '../store/ducks/tweets/actionCreators';
+import { selectAddFormState } from '../store/ducks/tweets/selectors';
+import { AddFormState } from '../store/ducks/tweets/contracts/state';
+import { UploadImages } from './UploadImages';
+import { uploadImage } from '../utils/uploadImage';
 
 interface AddTweetFormProps {
   classes: ReturnType<typeof useHomeStyles>;
@@ -19,55 +22,57 @@ interface AddTweetFormProps {
 
 const MAX_LENGTH = 280;
 
+export interface ImageObj {
+  blobUrl: string;
+  file: File;
+}
+
 export const AddTweetForm: React.FC<AddTweetFormProps> = ({
   classes,
   maxRows,
-}: AddTweetFormProps) => {
-  const [text, setText] = useState<string>('');
+}: AddTweetFormProps): React.ReactElement => {
+  const dispatch = useDispatch();
+  const [text, setText] = React.useState<string>('');
+  const [images, setImages] = React.useState<ImageObj[]>([]);
+
+  const addFormState = useSelector(selectAddFormState);
   const textLimitPercent = Math.round((text.length / 280) * 100);
   const textCount = MAX_LENGTH - text.length;
 
-  const handleChangeTextArea = (
-    e: React.FormEvent<HTMLTextAreaElement>
-  ): void => {
-    if (e.currentTarget && textLimitPercent < 100) {
+  const handleChangeTextare = (e: React.FormEvent<HTMLTextAreaElement>): void => {
+    if (e.currentTarget) {
       setText(e.currentTarget.value);
     }
   };
 
-  const handleClickAddTweet = (): void => {
+  const handleClickAddTweet = async (): Promise<void> => {
+    let result = [];
+    dispatch(setAddFormState(AddFormState.LOADING));
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i].file;
+      const { url } = await uploadImage(file);
+      result.push(url);
+    }
+    dispatch(fetchAddTweet({ text, images: result }));
     setText('');
+    setImages([]);
   };
 
   return (
-    <div className={classes.addForm}>
+    <div>
       <div className={classes.addFormBody}>
-        <Avatar
-          className={classes.tweetAvatar}
-          alt={`Аватарка пользователья`}
-          src="https://ca-times.brightspotcdn.com/dims4/default/423fc28/2147483647/strip/true/crop/958x539+1+0/resize/1200x675!/quality/90/?url=https%3A%2F%2Fcalifornia-times-brightspot.s3.amazonaws.com%2Fc9%2F98%2Ffa3b0cb001e3541c5818a89cd5cc%2Fla-1475087498-snap-photo"
-        />
+        <Avatar className={classes.tweetAvatar} alt={`Аватарка пользователя UserAvatar`} />
         <TextareaAutosize
-          onChange={handleChangeTextArea}
-          className={classes.addFormTextArea}
+          onChange={handleChangeTextare}
+          className={classes.addFormTextarea}
           placeholder="Что происходит?"
           value={text}
-          maxRows={maxRows}
+          rowsMax={maxRows}
         />
       </div>
       <div className={classes.addFormBottom}>
-        <div
-          className={classNames(
-            classes.tweetFooter,
-            classes.addFormBottomActions
-          )}
-        >
-          <IconButton color="primary">
-            <ImageOutlinedIcon style={{ fontSize: 26 }} />
-          </IconButton>
-          <IconButton>
-            <EmojiOutlinedIcon style={{ fontSize: 26 }} />
-          </IconButton>
+        <div className={classNames(classes.tweetFooter, classes.addFormBottomActions)}>
+          <UploadImages images={images} onChangeImages={setImages} />
         </div>
         <div className={classes.addFormBottomRight}>
           {text && (
@@ -79,31 +84,39 @@ export const AddTweetForm: React.FC<AddTweetFormProps> = ({
                   size={20}
                   thickness={5}
                   value={text.length >= MAX_LENGTH ? 100 : textLimitPercent}
-                  style={
-                    text.length >= MAX_LENGTH ? { color: 'red' } : undefined
-                  }
+                  style={text.length >= MAX_LENGTH ? { color: 'red' } : undefined}
                 />
                 <CircularProgress
                   style={{ color: 'rgba(0, 0, 0, 0.1)' }}
                   variant="static"
+                  size={20}
                   thickness={5}
                   value={100}
-                  size={20}
                 />
               </div>
             </>
           )}
-
           <Button
             onClick={handleClickAddTweet}
-            disabled={textLimitPercent >= MAX_LENGTH}
+            disabled={addFormState === AddFormState.LOADING || !text || text.length >= MAX_LENGTH}
             color="primary"
-            variant="contained"
-          >
-            Твитнуть
+            variant="contained">
+            {addFormState === AddFormState.LOADING ? (
+              <CircularProgress color="inherit" size={16} />
+            ) : (
+              'Твитнуть'
+            )}
           </Button>
         </div>
       </div>
+      {addFormState === AddFormState.ERROR && (
+        <Alert severity="error">
+          Ошибка при добавлении твита{' '}
+          <span aria-label="emoji-plak" role="img">
+            😞
+          </span>
+        </Alert>
+      )}
     </div>
   );
 };

@@ -1,13 +1,10 @@
 import React from 'react';
-import {
-  Dialog,
-  IconButton,
-  DialogContent,
-  DialogTitle,
-} from '@material-ui/core';
-import { useStylesSignIn } from '../pages/SignIn';
-
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
+import { useStylesSignIn } from '../pages/SignIn';
 
 interface ModalBlockProps {
   title?: string;
@@ -21,22 +18,17 @@ export const ModalBlock: React.FC<ModalBlockProps> = ({
   title,
   onClose,
   visible = false,
-  classes,
   children,
 }: ModalBlockProps): React.ReactElement | null => {
   if (!visible) {
     return null;
   }
+
   return (
-    <Dialog open={visible} onClose={onClose} aria-labelledby="form-dialog">
+    <Dialog open={visible} onClose={onClose} aria-labelledby="form-dialog-title">
       <DialogTitle id="form-dialog-title">
-        <IconButton
-          onClick={onClose}
-          color="secondary"
-          aria-label="close"
-          // className={classes.margin}
-        >
-          <CloseIcon color="secondary" style={{ fontSize: 26 }} />
+        <IconButton onClick={onClose} color="secondary" aria-label="close">
+          <CloseIcon style={{ fontSize: 26 }} color="secondary" />
         </IconButton>
         {title}
       </DialogTitle>
